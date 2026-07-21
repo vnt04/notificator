@@ -1,0 +1,11 @@
+{
+  // Type-checks the test and config surface that the build tsconfig excludes
+  // (its rootDir/include is limited to src/**). Emit is disabled; this config
+  // exists purely to guard against type regressions in tests and *.config.ts.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["src/**/*", "test/**/*", "*.config.ts"]
+}
