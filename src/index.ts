@@ -1,5 +1,6 @@
 import { loadEnv } from "./config/env.js";
 import { logger } from "./util/logger.js";
+import { BinancePriceService } from "./ingest/binancePriceService.js";
 
 function main(): void {
     const env = loadEnv();
@@ -15,9 +16,17 @@ function main(): void {
         );
     }
 
-    // Skeleton only — real teardown (drain queue, close WS/DB) lands in M6.
+    const priceService = new BinancePriceService(
+        env.BINANCE_WS_URL,
+        env.SYMBOLS,
+    );
+    priceService.on("tick", (tick) => logger.info(tick, "tick"));
+    priceService.start();
+
+    // Skeleton only — real teardown (drain queue, close DB) lands in M6.
     const shutdown = (signal: NodeJS.Signals): void => {
         logger.info({ signal }, "Shutting down gracefully…");
+        priceService.stop();
         process.exit(0);
     };
 

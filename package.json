@@ -20,10 +20,12 @@
     },
     "dependencies": {
         "pino": "^9",
+        "ws": "^8.21.1",
         "zod": "^3"
     },
     "devDependencies": {
         "@types/node": "^22",
+        "@types/ws": "^8.18.1",
         "@vitest/coverage-v8": "^2",
         "pino-pretty": "^11",
         "prettier": "^3.9.6",

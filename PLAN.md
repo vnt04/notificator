@@ -152,10 +152,10 @@ LOG_LEVEL=info
 
 ### M1 — Kết nối Binance WS, in giá BTC/ETH  🔴 event loop
 **Mục tiêu:** thấy giá live chạy ra màn hình. **Khái niệm:** event loop, EventEmitter, Buffer, WS events.
-- [ ] `binancePriceService.ts`: kết nối combined stream `btcusdt@trade/ethusdt@trade`.
-- [ ] Xử lý events `open` / `message` / `error` / `close`.
-- [ ] Parse `BinanceTradeMessage`, `parseFloat(data.p)`, emit `PriceTick` qua EventEmitter.
-- [ ] `index.ts`: subscribe và `logger.info` mỗi tick.
+- [x] `binancePriceService.ts`: kết nối combined stream `btcusdt@trade/ethusdt@trade`.
+- [x] Xử lý events `open` / `message` / `error` / `close`.
+- [x] Parse `BinanceTradeMessage`, `parseFloat(data.p)`, emit `PriceTick` qua EventEmitter.
+- [x] `index.ts`: subscribe và `logger.info` mỗi tick.
 - **Nghiệm thu:** chạy → thấy giá BTC + ETH cập nhật liên tục (nhiều lần/giây).
 
 ---

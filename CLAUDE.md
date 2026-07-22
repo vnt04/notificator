@@ -29,6 +29,8 @@ Requires Node **>= 20.12**. `.env` is optional (copy `.env.example`); dev/start 
 
 ## Architecture
 
+> Runtime flow of what is actually built (updated per milestone): see [`docs/architecture.md`](docs/architecture.md).
+
 A decoupled pipeline — each stage is separated so ingest never blocks on delivery:
 
 ```
@@ -41,7 +43,7 @@ Binance WS -> priceService -> queue -> alertEngine -> rateLimiter -> Channel -> 
 
 ### Build order is milestone-driven — do not skip ahead
 
-`PLAN.md` defines milestones M0 through M7. Each is small, runnable, and has explicit acceptance criteria that must pass before the next begins. Current state: **M0 done** (env + logger + entrypoint), **M1 next** (Binance WS client emitting `PriceTick`). Implement strictly in order.
+`PLAN.md` defines milestones M0 through M7. Each is small, runnable, and has explicit acceptance criteria that must pass before the next begins. Current state: **M1 done** (Binance WS client parsing trade frames and emitting `PriceTick`; parser unit-tested), **M2 next** (reconnect + backoff + 24h refresh). Implement strictly in order.
 
 ### Gotchas
 

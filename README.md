@@ -101,6 +101,8 @@ code" và kỹ sư hệ thống.
 
 ## 5. Kiến trúc hệ thống (architecture)
 
+> 📄 Sơ đồ dưới là **thiết kế mục tiêu (full system)**. Luồng **đã build thực tế** (cập nhật theo milestone) — xem [`docs/architecture.md`](./docs/architecture.md).
+
 ```
 Binance WebSocket (1 kết nối, firehose)     ← cái khó #2, #4
         │
