@@ -2,32 +2,32 @@ import { loadEnv } from "./config/env.js";
 import { logger } from "./util/logger.js";
 
 function main(): void {
-  const env = loadEnv();
+    const env = loadEnv();
 
-  logger.info(
-    { symbols: env.SYMBOLS, port: env.PORT },
-    "Notificator starting…",
-  );
-
-  if (!env.DISCORD_WEBHOOK_URL) {
-    logger.warn(
-      "Discord webhook not configured — notifications disabled (set DISCORD_WEBHOOK_URL in .env)",
+    logger.info(
+        { symbols: env.SYMBOLS, port: env.PORT },
+        "Notificator starting…",
     );
-  }
 
-  // Graceful-shutdown skeleton (real teardown — queue flush, WS close — lands in M6).
-  const shutdown = (signal: NodeJS.Signals): void => {
-    logger.info({ signal }, "Shutting down gracefully…");
-    process.exit(0);
-  };
+    if (!env.DISCORD_WEBHOOK_URL) {
+        logger.warn(
+            "Discord webhook not configured — notifications disabled (set DISCORD_WEBHOOK_URL in .env)",
+        );
+    }
 
-  process.on("SIGINT", () => shutdown("SIGINT"));
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
+    // Skeleton only — real teardown (drain queue, close WS/DB) lands in M6.
+    const shutdown = (signal: NodeJS.Signals): void => {
+        logger.info({ signal }, "Shutting down gracefully…");
+        process.exit(0);
+    };
+
+    process.on("SIGINT", () => shutdown("SIGINT"));
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
 }
 
 try {
-  main();
+    main();
 } catch (err: unknown) {
-  logger.fatal({ err }, "Fatal error during startup");
-  process.exit(1);
+    logger.fatal({ err }, "Fatal error during startup");
+    process.exit(1);
 }

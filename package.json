@@ -1,31 +1,34 @@
 {
-  "name": "notificator",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Real-time crypto price-alert notification service (BTC/ETH → Discord).",
-  "type": "module",
-  "engines": {
-    "node": ">=20.12"
-  },
-  "scripts": {
-    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node --env-file-if-exists=.env dist/index.js",
-    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
-  },
-  "dependencies": {
-    "pino": "^9",
-    "zod": "^3"
-  },
-  "devDependencies": {
-    "@types/node": "^22",
-    "@vitest/coverage-v8": "^2",
-    "pino-pretty": "^11",
-    "tsx": "^4",
-    "typescript": "^5",
-    "vitest": "^2"
-  }
+    "name": "notificator",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Real-time crypto price-alert notification service (BTC/ETH → Discord).",
+    "type": "module",
+    "engines": {
+        "node": ">=20.12"
+    },
+    "scripts": {
+        "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
+        "build": "tsc -p tsconfig.json",
+        "start": "node --env-file-if-exists=.env dist/index.js",
+        "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "format": "prettier --write .",
+        "format:check": "prettier --check ."
+    },
+    "dependencies": {
+        "pino": "^9",
+        "zod": "^3"
+    },
+    "devDependencies": {
+        "@types/node": "^22",
+        "@vitest/coverage-v8": "^2",
+        "pino-pretty": "^11",
+        "prettier": "^3.9.6",
+        "tsx": "^4",
+        "typescript": "^5",
+        "vitest": "^2"
+    }
 }

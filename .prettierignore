@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+package-lock.json
+*.sqlite
+*.log
+
+# Hand-authored prose — leave formatting to the author
+*.md
