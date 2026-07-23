@@ -44,7 +44,9 @@ Binance WS -> priceService -> queue -> alertEngine -> rateLimiter -> Channel -> 
 
 ### Build order is milestone-driven — do not skip ahead
 
-`PLAN.md` defines milestones M0 through M7. Each is small, runnable, and has explicit acceptance criteria that must pass before the next begins. Current state: **M1 done** (Binance WS client parsing trade frames and emitting `PriceTick`; parser unit-tested), **M2 next** (reconnect + backoff + 24h refresh). Implement strictly in order.
+`PLAN.md` defines milestones M0 through M7. Each is small, runnable, and has explicit acceptance criteria that must pass before the next begins. Current state: **M2 done** (Binance WS client with auto-reconnect, exponential backoff + jitter, 23h proactive refresh, process guards; unit-tested with fake timers), **M3 next** (alert engine: threshold crossing + cooldown). Implement strictly in order.
+
+Fault injection for manual verification lives in `test/harness/fakeBinanceServer.ts` — a fake Binance that can drop connections on demand. Run the app against it with `node --import tsx` (**not** `npx tsx`, which spawns a child process and breaks measurement).
 
 ### Gotchas
 
@@ -52,6 +54,7 @@ Binance WS -> priceService -> queue -> alertEngine -> rateLimiter -> Channel -> 
 - **Two tsconfigs:** `tsconfig.json` builds `src/**` only; `tsconfig.test.json` type-checks tests + `*.config.ts` with `noEmit`. `npm run typecheck` runs both.
 - **Binance `@trade` payload:** `p` (price) is a **string** — always `parseFloat`. Symbols are lowercase in the stream URL but UPPERCASE in the payload.
 - **Discord 429:** `retry_after` is in **seconds** (a float) inside the JSON body, not the headers.
+- **`ws` reconnect must be driven from `close`, never `error`:** once a connection is established, losing it (TCP FIN *or* RST) emits **only** `close` — `error` fires solely on handshake failure (e.g. `ECONNREFUSED`), and `close` follows it anyway. An `error` listener is still mandatory: `emit("error")` with no listener throws. Measured in `docs/learning/m2.md`.
 
 ## Conventions
 

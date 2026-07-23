@@ -162,10 +162,12 @@ LOG_LEVEL=info
 
 ### M2 — Resilience: reconnect + backoff + 24h  🟠 async error / stability
 **Mục tiêu:** không bao giờ chết. **Khái niệm:** xử lý lỗi async, process ổn định.
-- [ ] `util/backoff.ts`: exponential backoff + jitter (1s → tối đa 30s).
-- [ ] Tự reconnect khi `close`/`error`; reset backoff khi `open` thành công.
-- [ ] Chủ động reconnect **trước mốc 24h** (đặt timer ~23h).
-- [ ] Bắt `unhandledRejection` / `uncaughtException` để log, không crash âm thầm.
+- [x] `util/backoff.ts`: exponential backoff + jitter (1s → tối đa 30s).
+- [x] Tự reconnect khi `close`; reset backoff khi `open` thành công.
+      _(Đo được: `error` KHÔNG bắn khi mất kết nối đang chạy — chỉ khi bắt tay hỏng.
+      Drive từ `close` là đủ và đúng — xem [`docs/learning/m2.md`](docs/learning/m2.md).)_
+- [x] Chủ động reconnect **trước mốc 24h** (đặt timer ~23h).
+- [x] Bắt `unhandledRejection` (log, chạy tiếp) / `uncaughtException` (log + `exit(1)` để supervisor restart).
 - **Nghiệm thu:** ngắt mạng / force close → tự reconnect, log rõ; test backoff bằng **fake timers**.
 
 ---
@@ -210,7 +212,10 @@ LOG_LEVEL=info
   - `GET /notifications?limit=` — lịch sử + trạng thái
   - `GET /health` — trạng thái WS + bộ đếm
   - `GET /metrics` — ingest/s, sent/throttled/failed/retried, latency p50/p95, uptime, reconnect count
-- [ ] Graceful shutdown `SIGTERM`/`SIGINT`: ngừng nhận → drain queue → đóng WS → đóng DB → exit.
+- [~] Graceful shutdown `SIGTERM`/`SIGINT`: ngừng nhận → drain queue → đóng WS → đóng DB → exit.
+      _Khung đã làm sớm ở M2: chờ WS đóng xong (close frame thật sự gửi đi), chốt timeout 5s → `exit(1)`,
+      tín hiệu lần hai → thoát ngay, không gọi `process.exit(0)` ở đường bình thường.
+      **Còn lại cho M6:** drain queue + đóng DB + dừng HTTP server._
 - **Nghiệm thu:** `/health` phản ánh đúng; gửi SIGTERM → drain sạch, không mất tin đang trong queue.
 
 ---

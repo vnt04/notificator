@@ -4,18 +4,20 @@
 > Khác với [`README.md`](../README.md) (thiết kế mục tiêu, full system) và [`PLAN.md`](../PLAN.md) (kế hoạch build).
 > Muốn hiểu **tại sao** Node hành xử như vậy — xem [`learning/`](./learning/).
 >
-> _Cập nhật: 2026-07-22 · đã triển khai tới **M1** — ingest giá Binance qua WebSocket._
+> _Cập nhật: 2026-07-23 · đã triển khai tới **M2** — ingest + tự phục hồi kết nối._
 
 ## File hiện có
 
 | File | Vai trò |
 |------|---------|
-| `src/index.ts` | Entrypoint: load env → tạo service → subscribe `tick` → graceful shutdown |
+| `src/index.ts` | Entrypoint: process guards → load env → tạo service → subscribe `tick` → shutdown |
 | `src/config/env.ts` | `loadEnv()` — đọc `.env`, validate bằng Zod, fail-fast |
 | `src/util/logger.ts` | pino logger (JSON; pretty khi `NODE_ENV=development`) |
+| `src/util/backoff.ts` | `backoffDelay()` **pure** — mũ 2 + jitter, trần 30s |
 | `src/domain/types.ts` | `TradeSymbol`, `PriceTick` |
 | `src/ingest/binanceMessage.ts` | `parseTradeMessage()` **pure** + type guard `isTradeMessage()` |
-| `src/ingest/binancePriceService.ts` | `BinancePriceService` — WS client, emit `tick` |
+| `src/ingest/binancePriceService.ts` | `BinancePriceService` — WS client, tự reconnect, emit `tick` |
+| `test/harness/fakeBinanceServer.ts` | Binance giả — gây lỗi theo ý muốn (`close`/`terminate`/`reset`) |
 
 ## Pha khởi động (chạy 1 lần, tuần tự)
 
@@ -75,19 +77,37 @@ Mỗi trade là một vòng callback trên event loop đơn luồng. Vì trong v
 ## Mất kết nối & tắt máy (hành vi hiện tại)
 
 ```
-socket "error" → logger.error(...)
-socket "close" → logger.warn("... reconnect arrives in M2")   → DỪNG (chưa reconnect)
+socket "error" → logger.error(...)          ← CHỈ log; không kích hoạt reconnect
+socket "close" → handleClose(code)          ← nơi DUY NHẤT drive reconnect
+                    ├─ clearRefreshTimer()
+                    ├─ stopped? → log rồi dừng hẳn
+                    └─ attempt++ → setTimeout(connect, backoffDelay(attempt))
 
-Ctrl+C → SIGINT → shutdown → logger.info → priceService.stop() (socket.close()) → exit(0)
+socket "open"  → attempt = 0                ← reset backoff
+               → scheduleRefresh()          ← timer 23h, chủ động làm mới trước mốc 24h
+
+SIGINT/SIGTERM → shutdown()
+    ├─ chốt timeout 5s → hết giờ: log error + exit(1)
+    ├─ await stop()    → clear timers → once(socket,"close") → socket.close(1000)
+    ├─ clearTimeout
+    └─ log "Shutdown complete"   → KHÔNG exit(); hết handle thì Node tự thoát
+tín hiệu lần hai lúc đang tắt → exit(1) ngay
 ```
 
-⚠️ **M1 chưa reconnect:** khi socket đóng, handle I/O đó biến mất; `process.on(SIGINT/…)` **không** giữ event loop sống → nếu không còn handle nào, Node thoát lặng lẽ. Tức là hiện tại **rớt mạng = chương trình chết im** — đó là lý do M2 tồn tại.
+**Vì sao reconnect nằm ở `close` chứ không phải `error`:** đo được rằng khi kết nối đang chạy mà đứt — dù TCP FIN hay RST — `ws` **không** bắn `error`, chỉ bắn `close`. `error` chỉ xuất hiện khi bắt tay thất bại (VD `ECONNREFUSED`), và ngay sau đó `close` cũng bắn. Vậy `close` phủ 100% trường hợp, còn `error` thì không. Số liệu ở [`learning/m2.md`](./learning/m2.md).
+
+`error` vẫn bắt buộc phải có listener: `emit("error")` mà không ai nghe thì EventEmitter **throw**.
+
+**Process guards** (`index.ts`): `unhandledRejection` → log rồi chạy tiếp; `uncaughtException` → log `fatal` + `exit(1)` để supervisor restart (thoát `0` là "chết im", không ai cứu).
+
+**Tắt êm:** `stop()` trả Promise và chờ socket đóng xong, nên close frame thật sự gửi được đi (server nhận `code=1000`) và pino kịp xả log. Đường bình thường không gọi `process.exit()` — process thoát vì hết handle, đúng nguyên lý ở [`learning/m1.md §1`](./learning/m1.md#1-vòng-đời-process--event-loop). Số đo ba nhánh: [`learning/m2.md §7`](./learning/m2.md#7-tắt-êm-graceful-shutdown).
+
+⚠️ **Còn nợ (M6):** drain queue, đóng DB, dừng HTTP server — chưa có gì trong số đó để đóng.
 
 ## Gaps — mỗi milestone bồi thêm vào luồng này
 
 | Milestone | Thêm vào luồng |
 |-----------|----------------|
-| **M2** | `close`/`error` → backoff + tự reconnect; timer reconnect trước mốc 24h; bắt `unhandledRejection`/`uncaughtException` |
 | **M3** | Chèn giữa `tick` và log: `alertEngine` — chỉ bắn khi giá *cắt* ngưỡng + cooldown/dedup |
 | **M4** | `tick` → **queue bounded** → rate limiter (backpressure) thay vì log thẳng |
 | **M5** | Cuối luồng: `DiscordChannel.send()` (embed + retry 429) thay cho `logger.info` |
