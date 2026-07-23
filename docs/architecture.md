@@ -2,6 +2,7 @@
 
 > Tài liệu **luồng chạy thực tế** của code hiện tại, cập nhật theo từng milestone.
 > Khác với [`README.md`](../README.md) (thiết kế mục tiêu, full system) và [`PLAN.md`](../PLAN.md) (kế hoạch build).
+> Muốn hiểu **tại sao** Node hành xử như vậy — xem [`learning/`](./learning/).
 >
 > _Cập nhật: 2026-07-22 · đã triển khai tới **M1** — ingest giá Binance qua WebSocket._
 

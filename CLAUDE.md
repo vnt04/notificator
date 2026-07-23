@@ -30,6 +30,7 @@ Requires Node **>= 20.12**. `.env` is optional (copy `.env.example`); dev/start 
 ## Architecture
 
 > Runtime flow of what is actually built (updated per milestone): see [`docs/architecture.md`](docs/architecture.md).
+> Deep-dive notes on the Node.js concepts behind each milestone (this is a learning project): [`docs/learning/`](docs/learning/).
 
 A decoupled pipeline — each stage is separated so ingest never blocks on delivery:
 
